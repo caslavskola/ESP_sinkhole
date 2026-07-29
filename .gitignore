@@ -1,0 +1,8 @@
+# Local secrets
+main/secrets.h
+
+# ESP-IDF generated files
+build/
+sdkconfig.old
+dependencies.lock
+managed_components/
