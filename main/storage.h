@@ -6,6 +6,11 @@
 
 #include "esp_err.h"
 
+typedef struct
+{
+    const esp_partition_t *partition;
+} storage_handle_t;
+
 esp_err_t storage_init(void);
 
 esp_err_t storage_read(
