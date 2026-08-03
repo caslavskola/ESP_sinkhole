@@ -12,32 +12,64 @@
 
 #include "hash.h"
 
+#define BLOCKLIST_FILE_SIGNATURE 0x424C4B4CU //The ASCII for "BLKL" encoded in unsigned HEX
+
 static const char *TAG = "BLOCKLIST";
+
+
+typedef struct
+{
+    uint32_t file_signature;
+    uint32_t version;
+    uint32_t count;
+} blocklist_header_t;
+
+typedef struct
+{
+    uint64_t hash;
+} blocklist_entry_t;
+
+static storage_handle_t storage;
+static blocklist_header_t header;
+
+static uint64_t hash_domain(
+    const char *domain)
+{
+    return XXH3_64bits(
+        domain,
+        strlen(domain));
+}
+
+esp_err_t blocklist_init(void)
+{
+    esp_err_t result;
+    result = storage_open("blocklist", &storage);
+
+    if (result != ESP_OK)
+        return result;
+
+    return blocklist_load();
+}
+
 
 esp_err_t blocklist_load(void)
 {
-    const void *image;
+    esp_err_t result;
+    result = storage_read( &storage, 0, &header, sizeof(header));
 
-    image = storage_blocklist_data();
-
-    if (image == NULL){
-        ESP_LOGW(TAG, "No blocklist");
-        return ESP_ERR_NOT_FOUND;
+    if (result != ESP_OK){
+        loaded = false;
+        return result;
     }
 
-    header = image;
-
-    if (header->magic != BLOCKLIST_MAGIC){
-        header = NULL;
-        return ESP_ERR_INVALID_RESPONSE;
+    if (header.magic != BLOCKLIST_MAGIC){
+        ESP_LOGW( TAG, "Invalid blocklist");
+        loaded = false;
+        return ESP_ERR_INVALID_VERSION;
     }
 
-    entries = (const blocklist_entry_t *)(header + 1);
-
-    ESP_LOGI(
-        TAG,
-        "Loaded %lu domains",
-        (unsigned long)header->count);
+    loaded = true;
+    ESP_LOGI(TAG, "Loaded %lu domains",(unsigned long)header->count);
 
     return ESP_OK;
 }
