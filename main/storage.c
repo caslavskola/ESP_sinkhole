@@ -16,9 +16,7 @@ esp_err_t storage_init(void)
 }
 
 
-esp_err_t storage_open(
-    const char *label,
-    storage_handle_t *handle)
+esp_err_t storage_open(const char *label, storage_handle_t *handle)
 {
     if (label == NULL || handle == NULL)
     {
@@ -28,10 +26,7 @@ esp_err_t storage_open(
 
     const esp_partition_t *partition;
 
-    partition = esp_partition_find_first(
-        ESP_PARTITION_TYPE_DATA,
-        ESP_PARTITION_SUBTYPE_ANY,
-        label);
+    partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, label);
 
 
     if (partition == NULL)
@@ -58,11 +53,7 @@ esp_err_t storage_open(
 }
 
 
-esp_err_t storage_read(
-    const storage_handle_t *handle,
-    uint32_t offset,
-    void *buffer,
-    size_t length)
+esp_err_t storage_read(const storage_handle_t *handle, uint32_t offset, void *buffer, size_t length)
 {
     if (handle == NULL ||
         handle->partition == NULL ||
@@ -78,19 +69,11 @@ esp_err_t storage_read(
     }
 
 
-    return esp_partition_read(
-        handle->partition,
-        offset,
-        buffer,
-        length);
+    return esp_partition_read(handle->partition, offset, buffer, length);
 }
 
 
-esp_err_t storage_write(
-    const storage_handle_t *handle,
-    uint32_t offset,
-    const void *buffer,
-    size_t length)
+esp_err_t storage_write(const storage_handle_t *handle, uint32_t offset, const void *buffer, size_t length)
 {
     if (handle == NULL ||
         handle->partition == NULL ||
@@ -106,11 +89,7 @@ esp_err_t storage_write(
     }
 
 
-    return esp_partition_write(
-        handle->partition,
-        offset,
-        buffer,
-        length);
+    return esp_partition_write(handle->partition, offset, buffer, length);
 }
 
 
@@ -124,10 +103,7 @@ esp_err_t storage_erase(
     }
 
 
-    return esp_partition_erase_range(
-        handle->partition,
-        0,
-        handle->partition->size);
+    return esp_partition_erase_range(handle->partition, 0, handle->partition->size);
 }
 
 
@@ -139,7 +115,6 @@ size_t storage_size(
     {
         return 0;
     }
-
 
     return handle->partition->size;
 }
