@@ -12,6 +12,7 @@
 
 #include "hash.h"
 
+static const char *TAG = "BLOCKLIST";
 
 esp_err_t blocklist_load(void)
 {
