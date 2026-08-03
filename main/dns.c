@@ -11,7 +11,9 @@
 
 #include "dns.h"
 #include "blocklist.h"
+#include "statistics.c"
 #include "secrets.h"
+
 
 
 #define DNS_PORT 53
@@ -190,7 +192,7 @@ static void dns_task(void *parameter)
             memcpy(response, request, request_length);
             dns_make_block_response(response);
             sendto(socket_fd, response, request_length, 0,(struct sockaddr *)&client, client_length);
-
+	    block_counter_increment();
             continue;
         }
 

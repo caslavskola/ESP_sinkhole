@@ -19,35 +19,19 @@ esp_err_t storage_init(void)
 esp_err_t storage_open(const char *label, storage_handle_t *handle)
 {
     if (label == NULL || handle == NULL)
-    {
         return ESP_ERR_INVALID_ARG;
-    }
-
 
     const esp_partition_t *partition;
 
     partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, label);
 
-
     if (partition == NULL)
-    {
-        ESP_LOGE(
-            TAG,
-            "Partition not found: %s",
-            label);
-
+        ESP_LOGE(TAG, "Partition not found: %s", label);
         return ESP_ERR_NOT_FOUND;
-    }
-
 
     handle->partition = partition;
 
-
-    ESP_LOGI(
-        TAG,
-        "Opened partition: %s",
-        label);
-
+    ESP_LOGI(TAG, "Opened partition: %s", label);
 
     return ESP_OK;
 }
