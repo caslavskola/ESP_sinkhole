@@ -15,7 +15,7 @@
 
 
 #define DNS_PORT 53
-#define DNS_BUFFER_SIZE 512
+#define DNS_BUFFER_SIZE 2048
 #define DNS_TIMEOUT_SECONDS 2
 
 
