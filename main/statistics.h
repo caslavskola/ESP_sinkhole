@@ -1,5 +1,5 @@
-#ifndef BLOCK_COUNTER_H
-#define BLOCK_COUNTER_H
+#ifndef STATISTICS_H
+#define STATISTICS_H
 
 #include <stdint.h>
 #include "esp_err.h"

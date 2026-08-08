@@ -8,8 +8,7 @@
 
 #include "blocklist.h"
 #include "storage.h"
-#include "stats.h"
-#include "list_manager.h"
+#include "statistics.h"
 
 #include "hash.h"
 
@@ -21,14 +20,6 @@ static bool loaded = false;
 
 static storage_handle_t storage;
 static blocklist_header_t header;
-
-static uint64_t hash_domain(
-    const char *domain)
-{
-    return XXH3_64bits(
-        domain,
-        strlen(domain));
-}
 
 esp_err_t blocklist_init(void)
 {
@@ -59,7 +50,7 @@ esp_err_t blocklist_load(void)
     }
 
     loaded = true;
-    ESP_LOGI(TAG, "Loaded %lu domains",(unsigned long)header->count);
+    ESP_LOGI(TAG, "Loaded %lu domains",(unsigned long)header.count);
 
     return ESP_OK;
 }
@@ -122,4 +113,14 @@ bool blocklist_check(const char *domain)
     }
 
     return false;
+}
+
+size_t blocklist_count(void)
+{
+    if (!loaded)
+    {
+        return 0;
+    }
+
+    return header.count;
 }

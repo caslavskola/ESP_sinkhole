@@ -14,22 +14,27 @@ typedef struct
 
 esp_err_t storage_init(void);
 
+
+esp_err_t storage_open( 
+    const char *label, 
+    storage_handle_t *handle);
+
 esp_err_t storage_read(
-    const char *label,
+    const storage_handle_t *handle,
     uint32_t offset,
     void *buffer,
     size_t length);
 
 esp_err_t storage_write(
-    storage_object_t object,
+    const storage_handle_t *handle,
     uint32_t offset,
     const void *buffer,
     size_t length);
 
 esp_err_t storage_erase(
-    storage_object_t object);
+    const storage_handle_t *handle);
 
 size_t storage_size(
-    storage_object_t object);
+    const storage_handle_t *handle);
 
 #endif

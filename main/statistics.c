@@ -1,4 +1,5 @@
-#include "block_counter.h"
+#include "statistics.h"
+#include "storage.h"
 #define BLOCK_COUNTER_PARTITION "statistics"
 
 static storage_handle_t s_storage;

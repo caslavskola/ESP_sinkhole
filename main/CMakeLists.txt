@@ -1,2 +1,14 @@
-idf_component_register(SRCS "ESP_sinkhole.c"
-                    INCLUDE_DIRS ".")
+idf_component_register(
+    SRCS 
+        "ESP_sinkhole.c"
+        "wifi.c"
+        "dns.c"
+        "blocklist.c"
+        "statistics.c"
+        "storage.c"
+        "list_manager.c"
+        "hash.c"
+        "http_api.c"
+
+    INCLUDE_DIRS "."
+)

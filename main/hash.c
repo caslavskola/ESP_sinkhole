@@ -1,6 +1,5 @@
 #include <string.h>
 
-#include "xxhash.h"
 #include "hash.h"
 
 static size_t to_lower_case(
@@ -12,9 +11,9 @@ static size_t to_lower_case(
 
     while (input[i] != '\0' && i < output_size - 1){
         char c = input[i];
-        if (c >= 'A' && c <= 'Z'){
+        if (c >= 'A' && c <= 'Z')
             c = (char)(c + ('a' - 'A'));
-        }
+
         output[i] = c;
         i++;
     }
@@ -27,13 +26,13 @@ static size_t to_lower_case(
 uint64_t hash_domain(const char *domain)
 {
     char buffer[256];
-    size_t i;
+    size_t length;
 
-    size_t length = to_lower_case(
+    length = to_lower_case(
         domain,
-        normalized,
-        sizeof(normalized));
-    buffer[i] = '\0';
+        buffer,
+        sizeof(buffer));
+    buffer[length] = '\0';
 
-    return XXH3_64bits(buffer, i);
+    return XXH3_64bits(buffer, length);
 }

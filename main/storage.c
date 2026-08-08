@@ -25,9 +25,10 @@ esp_err_t storage_open(const char *label, storage_handle_t *handle)
 
     partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, label);
 
-    if (partition == NULL)
+    if (partition == NULL){
         ESP_LOGE(TAG, "Partition not found: %s", label);
         return ESP_ERR_NOT_FOUND;
+    }
 
     handle->partition = partition;
 
@@ -39,39 +40,34 @@ esp_err_t storage_open(const char *label, storage_handle_t *handle)
 
 esp_err_t storage_read(const storage_handle_t *handle, uint32_t offset, void *buffer, size_t length)
 {
-    if (handle == NULL ||
-        handle->partition == NULL ||
-        buffer == NULL)
-    {
+    if (handle == NULL 
+        || handle->partition == NULL 
+        || buffer == NULL)
         return ESP_ERR_INVALID_ARG;
-    }
 
 
-    if ((offset + length) > handle->partition->size)
-    {
+    if (offset > handle->partition->size 
+        || length > handle->partition->size - offset)
         return ESP_ERR_INVALID_SIZE;
-    }
 
 
     return esp_partition_read(handle->partition, offset, buffer, length);
 }
 
 
-esp_err_t storage_write(const storage_handle_t *handle, uint32_t offset, const void *buffer, size_t length)
+esp_err_t storage_write(
+    const storage_handle_t *handle, 
+    uint32_t offset, 
+    const void *buffer, 
+    size_t length)
 {
-    if (handle == NULL ||
-        handle->partition == NULL ||
-        buffer == NULL)
-    {
+    if (handle == NULL 
+        || handle->partition == NULL 
+        || buffer == NULL)
         return ESP_ERR_INVALID_ARG;
-    }
-
 
     if ((offset + length) > handle->partition->size)
-    {
         return ESP_ERR_INVALID_SIZE;
-    }
-
 
     return esp_partition_write(handle->partition, offset, buffer, length);
 }
@@ -80,12 +76,9 @@ esp_err_t storage_write(const storage_handle_t *handle, uint32_t offset, const v
 esp_err_t storage_erase(
     const storage_handle_t *handle)
 {
-    if (handle == NULL ||
-        handle->partition == NULL)
-    {
+    if (handle == NULL 
+        || handle->partition == NULL)
         return ESP_ERR_INVALID_ARG;
-    }
-
 
     return esp_partition_erase_range(handle->partition, 0, handle->partition->size);
 }
@@ -94,11 +87,9 @@ esp_err_t storage_erase(
 size_t storage_size(
     const storage_handle_t *handle)
 {
-    if (handle == NULL ||
-        handle->partition == NULL)
-    {
+    if (handle == NULL 
+        || handle->partition == NULL)
         return 0;
-    }
 
     return handle->partition->size;
 }

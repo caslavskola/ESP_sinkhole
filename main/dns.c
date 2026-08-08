@@ -15,7 +15,6 @@
 #include "secrets.h"
 
 
-
 #define DNS_PORT 53
 #define DNS_BUFFER_SIZE 2048
 #define DNS_TIMEOUT_SECONDS 2
@@ -41,7 +40,7 @@ static int dns_forward(uint8_t *request, int request_length, uint8_t *response)
     server.sin_family = AF_INET;
     server.sin_port = htons(DNS_UPSTREAM_PORT);
 
-    inet_pton(AF_INET, DNS_UPSTREAM_IP, &server.sin_addr);
+    inet_pton(AF_INET, DNS_UPSTREAM_PRIMARY, &server.sin_addr);
 
     sendto( socket_fd, request, request_length, 0, (struct sockaddr *)&server, sizeof(server));
 
@@ -90,7 +89,7 @@ static bool dns_get_domain(uint8_t *packet, int length, char *domain, size_t dom
             return false;
 
 
-        for (int i = 0; i < label_length; i++
+        for (int i = 0; i < label_length; i++)
             domain[output++] = packet[position++];
 
         domain[output++] = '.';
@@ -208,7 +207,7 @@ static void dns_task(void *parameter)
 }
 
 
-esp_err_t dns_init(void)
+esp_err_t dns_sinkhole_init(void)
 {
     BaseType_t result;
 
