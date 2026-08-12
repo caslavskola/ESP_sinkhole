@@ -9,6 +9,7 @@
 #include "esp_wifi.h"
 #include "wifi.h"
 #include "secrets.h"
+#include "nvs_flash.h"
 
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
@@ -21,6 +22,25 @@ static int retry_count;
 
 #define WIFI_MAX_RETRY 5
 
+static esp_err_t nvs_init(void)
+{
+    esp_err_t result;
+    result = nvs_flash_init();
+
+    if (result == ESP_ERR_NVS_NO_FREE_PAGES 
+        || result == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {    
+        result = nvs_flash_erase();
+        if (result != ESP_OK)
+            return result;
+
+        result = nvs_flash_init();
+    }
+    return result;
+}
+
+
+
 static void wifi_event_handler(void *arg,
                                esp_event_base_t event_base,
                                int32_t event_id,
@@ -32,6 +52,8 @@ static void wifi_event_handler(void *arg,
 	    ESP_LOGI(TAG, "WiFi started");
         }
         else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
+            wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *)event_data;
+            ESP_LOGW(TAG, "WiFi disconnected, reason=%d", event->reason);
             if (retry_count < WIFI_MAX_RETRY) {
                 esp_wifi_connect();
                 retry_count++;
@@ -60,12 +82,19 @@ static void wifi_event_handler(void *arg,
 esp_err_t wifi_init(void)
 {
     ESP_LOGI(TAG, "Starting WiFi");
-    
+
+    ESP_LOGI(TAG, "Starting NVS");
+    esp_err_t result = nvs_init();
+
+    if (result != ESP_OK)
+        return result;
+
+    ESP_LOGI(TAG, "NVS started");
+
     wifi_event_group = xEventGroupCreate();
 
-    if (wifi_event_group == NULL){
+    if (wifi_event_group == NULL)
         return ESP_ERR_NO_MEM;
-    }
 
     ESP_ERROR_CHECK(esp_netif_init());
 
