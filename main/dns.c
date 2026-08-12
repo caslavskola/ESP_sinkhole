@@ -40,10 +40,17 @@ static int dns_forward(uint8_t *request, int request_length, uint8_t *response)
     server.sin_family = AF_INET;
     server.sin_port = htons(DNS_UPSTREAM_PORT);
 
-    inet_pton(AF_INET, DNS_UPSTREAM_PRIMARY, &server.sin_addr);
+    if (inet_pton(AF_INET, DNS_UPSTREAM_PRIMARY, &server.sin_addr) != 1){
+        close(socket_fd);
+        return -1;
+    }
 
-    sendto( socket_fd, request, request_length, 0, (struct sockaddr *)&server, sizeof(server));
+    int sent = sendto( socket_fd, request, request_length, 0, (struct sockaddr *)&server, sizeof(server));
 
+    if (sent < 0){
+    close(socket_fd);
+    return -1;
+    }
 
     struct timeval timeout;
 
@@ -67,7 +74,7 @@ static int dns_forward(uint8_t *request, int request_length, uint8_t *response)
 static bool dns_get_domain(uint8_t *packet, int length, char *domain, size_t domain_size)
 {
     int position = 12;
-    int output = 0;
+    size_t output = 0;
 
 
     if (length < 13)
@@ -84,8 +91,9 @@ static bool dns_get_domain(uint8_t *packet, int length, char *domain, size_t dom
         if (label_length == 0)
             break;
 
-
-        if (output + label_length + 1 >= domain_size)
+        if (label_length > 63
+            || position + label_length > length
+            || output + label_length + 1 >= domain_size)
             return false;
 
 
@@ -123,9 +131,8 @@ static void dns_make_block_response(uint8_t *packet)
 
 static void dns_task(void *parameter)
 {
-    uint8_t request[DNS_BUFFER_SIZE];
-    uint8_t response[DNS_BUFFER_SIZE];
-
+    static uint8_t request[DNS_BUFFER_SIZE];
+    static uint8_t response[DNS_BUFFER_SIZE];
 
     int socket_fd;
 
