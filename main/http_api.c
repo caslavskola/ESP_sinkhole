@@ -74,7 +74,7 @@ static esp_err_t blocklist_update_handler(
         return ESP_OK;
     }
 
-    httpd_resp_set_type(request, "application/json");
+    httpd_resp_set_type(request, "text/plain");
 
     return httpd_resp_send(request, "{\"result\":\"ok\"}", HTTPD_RESP_USE_STRLEN);
 }

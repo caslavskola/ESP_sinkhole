@@ -13,6 +13,7 @@
 #include "hash.h"
 
 #define BLOCKLIST_FILE_SIGNATURE 0x424C4B4CU //The ASCII for "BLKL" encoded in unsigned HEX
+#define BLOCKLIST_PARTITION "blocklist"
 
 static const char *TAG = "BLOCKLIST";
 
@@ -24,7 +25,7 @@ static blocklist_header_t header;
 esp_err_t blocklist_init(void)
 {
     esp_err_t result;
-    result = storage_open("blocklist", &storage);
+    result = storage_open(BLOCKLIST_PARTITION, &storage);
 
     if (result != ESP_OK)
         return result;

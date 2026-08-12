@@ -11,6 +11,7 @@
 
 #include "hash.h"
 
+#define BLOCKLIST_PARTITION "blocklist"
 #define TAG "LIST_MANAGER"
 #define BLOCKLIST_FILE_SIGNATURE 0x424C4B4CU
 #define BLOCKLIST_VERSION 1
@@ -287,7 +288,7 @@ static esp_err_t write_database(blocklist_entry_t *entries, size_t count)
     size_t database_size;
     esp_err_t result;
 
-    result = storage_open("blocklist", &storage);
+    result = storage_open(BLOCKLIST_PARTITION, &storage);
 
     if (result != ESP_OK)
         return result;
