@@ -45,9 +45,11 @@ esp_err_t blocklist_load(void)
     }
 
     if (header.file_signature != BLOCKLIST_FILE_SIGNATURE){
-        ESP_LOGW( TAG, "Invalid blocklist");
-        loaded = false;
-        return ESP_ERR_INVALID_VERSION;
+        ESP_LOGW( TAG, "Invalid blocklist, loading empty blocklist.");
+        header.count = 0;
+        loaded = true;
+
+        return ESP_OK;
     }
 
     loaded = true;

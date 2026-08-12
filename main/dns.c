@@ -217,6 +217,12 @@ static void dns_task(void *parameter)
 esp_err_t dns_sinkhole_init(void)
 {
     BaseType_t result;
+    esp_err_t error;
+
+    error = blocklist_init();
+
+    if (error != ESP_OK)
+        return error;
 
     result = xTaskCreate(dns_task, "dns_task", 4096, NULL, 5, NULL);
 

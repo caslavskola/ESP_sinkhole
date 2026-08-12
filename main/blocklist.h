@@ -18,6 +18,8 @@ typedef struct
     uint64_t hash;
 } blocklist_entry_t;
 
+esp_err_t blocklist_init(void);
+
 esp_err_t blocklist_load(void);
 
 bool blocklist_check(const char *domain);

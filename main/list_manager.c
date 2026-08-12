@@ -55,7 +55,7 @@ static size_t remove_duplicates(blocklist_entry_t *entries, size_t count)
 static char *skip_whitespace( char *text) 
 { 
     while (*text != '\0' 
-            && *text != ' ') 
+            && (*text == ' ' || *text == ' ')) 
 	text++; 
     return text; 
 }
@@ -65,7 +65,7 @@ static void trim_whitespace( char *text)
     size_t length; 
     length = strlen(text); 
     while (length > 0 
-           && *text - 1 != ' ')
+           && (text[length-1] == ' ' || text[length-1] == '\t'))
     { 
         text[length - 1] = '\0'; 
         length--; 
@@ -133,7 +133,7 @@ static bool parse_domain( char *line, char *domain, size_t domain_size)
     char *second;
     char *extra;
     char *saveptr;
-
+    
     trim_whitespace(line);
 
     start = skip_whitespace(line);
@@ -164,9 +164,13 @@ static bool parse_domain( char *line, char *domain, size_t domain_size)
      */
     if (second == NULL)
     {
-        if (!valid_domain(first)
-            || strlen(first) >= domain_size)
+        if (!valid_domain(first))
             return false;
+        
+
+        if (strlen(first) >= domain_size)
+            return false;
+        
 
         strcpy(domain, first);
 
@@ -182,7 +186,7 @@ static bool parse_domain( char *line, char *domain, size_t domain_size)
 
     if (!valid_domain(second))
         return false;
-
+    
     if (strlen(second) >= domain_size)
         return false;
 
@@ -232,12 +236,21 @@ static esp_err_t parse_line(
     char domain[254];
     uint64_t hash;
 
+    esp_err_t result;
+
     if (!parse_domain(line, domain, sizeof(domain))) 
         return ESP_OK;
 
+
     hash = XXH3_64bits(domain, strlen(domain));
 
-    return add_hash(entries, count, capacity, hash);
+    result = add_hash(
+        entries,
+        count,
+        capacity,
+        hash);
+
+    return result;
 }
 
 static esp_err_t process_data(
@@ -317,7 +330,9 @@ static esp_err_t write_database(blocklist_entry_t *entries, size_t count)
     if (count == 0)
         return ESP_OK;
 
-    return storage_write(&storage, sizeof(header), entries, count * sizeof(blocklist_entry_t));
+    result = storage_write(&storage, sizeof(header), entries, count * sizeof(blocklist_entry_t));
+
+    return result;
 }
 
 static void list_cleanup(
@@ -405,6 +420,11 @@ static esp_err_t list_update_internal(
             return result;
     }
 
+    ESP_LOGI(
+    TAG,
+    "Internal update count: %lu",
+    (unsigned long)*count);
+
     return ESP_OK;
 }
 
@@ -420,9 +440,11 @@ esp_err_t list_update(
     size_t capacity = HASH_ARRAY_INITIAL_CAPACITY;
     esp_err_t result;
 
-    if (url == NULL 
-        || strlen(url) >= LIST_URL_MAX_LENGTH)
-        return ESP_ERR_INVALID_SIZE;
+    if (url == NULL)
+        return ESP_ERR_INVALID_ARG;
+
+    if (strlen(url) >= LIST_URL_MAX_LENGTH)
+        return ESP_ERR_INVALID_SIZE;  
 
     entries = malloc(capacity * sizeof(blocklist_entry_t));
 
