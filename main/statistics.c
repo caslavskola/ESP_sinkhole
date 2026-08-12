@@ -8,7 +8,7 @@ static uint64_t s_block_count;
 
 esp_err_t block_counter_init(void)
 {
-    block_counter_data_t data;
+    block_counter_data_t data = {0};
     esp_err_t result;
 
     result = storage_open(BLOCK_COUNTER_PARTITION, &s_storage);
@@ -50,7 +50,7 @@ void block_counter_reset(void)
 
 esp_err_t block_counter_save(void)
 {
-    block_counter_data_t data;
+    block_counter_data_t data = {0};
     esp_err_t result;
 
     data.count = s_block_count;
