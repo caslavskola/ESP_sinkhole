@@ -6,12 +6,14 @@
 #include "http_api.h"
 #include "blocklist.h"
 #include "list_manager.h"
+#include "storage.h"
 #include "statistics.h"
 #include "esp_http_server.h"
 #define TAG "HTTP_API"
 
 #define API_STATUS_URI          "/api/status"
 #define API_BLOCKLIST_UPDATE_URI "/api/blocklist/update"
+#define API_BLOCKLIST_ERASE_URI "/api/storage/erase/blocklist"
 
 #define HTTP_RESPONSE_BUFFER_SIZE 256
 #define HTTP_REQUEST_BUFFER_SIZE 256
@@ -98,6 +100,71 @@ static const httpd_uri_t blocklist_update_uri =
 };
 
 
+static esp_err_t blocklist_erase_handler(
+    httpd_req_t *request)
+{
+    storage_handle_t storage;
+    esp_err_t result;
+
+    result = storage_open(
+        "blocklist",
+        &storage);
+
+    if (result != ESP_OK)
+    {
+        ESP_LOGE(
+            TAG,
+            "Failed to open blocklist storage: %s",
+            esp_err_to_name(result));
+
+        httpd_resp_send_err(
+            request,
+            HTTPD_500_INTERNAL_SERVER_ERROR,
+            "Failed to open blocklist storage");
+
+        return ESP_OK;
+    }
+
+    result = storage_erase(&storage);
+
+    if (result != ESP_OK)
+    {
+        ESP_LOGE(
+            TAG,
+            "Failed to erase blocklist: %s",
+            esp_err_to_name(result));
+
+        httpd_resp_send_err(
+            request,
+            HTTPD_500_INTERNAL_SERVER_ERROR,
+            "Failed to erase blocklist");
+
+        return ESP_OK;
+    }
+
+    /*
+     * The blocklist is no longer valid after erase.
+     */
+    blocklist_load();
+
+    httpd_resp_set_type(
+        request,
+        "text/plain");
+
+    return httpd_resp_send(
+        request,
+        "result=ok\n",
+        HTTPD_RESP_USE_STRLEN);
+}
+
+static const httpd_uri_t blocklist_erase_uri =
+{
+    .uri = API_BLOCKLIST_ERASE_URI,
+    .method = HTTP_POST,
+    .handler = blocklist_erase_handler,
+    .user_ctx = NULL
+};
+
 esp_err_t http_api_init(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -129,7 +196,18 @@ esp_err_t http_api_init(void)
         return result;
     }
 
+    result = httpd_register_uri_handler(
+    s_server,
+    &blocklist_erase_uri);
+
+    if (result != ESP_OK){
+        httpd_stop(s_server);
+        s_server = NULL;
+        return result;
+    }
+
     ESP_LOGI(TAG, "HTTP API started");
 
     return ESP_OK;
 }
+
