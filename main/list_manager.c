@@ -432,7 +432,12 @@ static esp_err_t list_update_internal(
 esp_err_t list_update(
     const char *url)
 {
-    esp_http_client_config_t config = {.url = url, .timeout_ms = 15000,};
+    esp_http_client_config_t config = {
+        .url = url, 
+        .timeout_ms = 15000,
+        .timeout_ms = 15000, 
+        .disable_auto_redirect = false, 
+        .max_redirection_count = 5,};
 
     esp_http_client_handle_t client = NULL;
     blocklist_entry_t *entries = NULL;

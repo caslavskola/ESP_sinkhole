@@ -168,6 +168,7 @@ static const httpd_uri_t blocklist_erase_uri =
 esp_err_t http_api_init(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.stack_size = 8192;
 
     esp_err_t result;
 
