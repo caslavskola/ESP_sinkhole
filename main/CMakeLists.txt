@@ -9,6 +9,7 @@ idf_component_register(
         "list_manager.c"
         "hash.c"
         "http_api.c"
+        "tls_config.c"
 
     INCLUDE_DIRS "."
 )

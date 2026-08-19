@@ -8,6 +8,7 @@
 #include "blocklist.h"
 #include "storage.h"
 #include "esp_http_client.h"
+#include "tls_config.h"
 
 #include "hash.h"
 
@@ -458,6 +459,8 @@ esp_err_t list_update(
         list_cleanup(NULL, NULL, entries);
         return ESP_ERR_NO_MEM;
     }
+
+    tls_configure_http_client(&config);
 
     client = esp_http_client_init(&config);
 
