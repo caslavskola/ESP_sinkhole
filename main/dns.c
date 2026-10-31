@@ -11,7 +11,7 @@
 
 #include "dns.h"
 #include "blocklist.h"
-#include "statistics.c"
+#include "statistics.h"
 #include "secrets.h"
 
 

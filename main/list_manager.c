@@ -435,7 +435,6 @@ esp_err_t list_update(
     esp_http_client_config_t config = {
         .url = url, 
         .timeout_ms = 15000,
-        .timeout_ms = 15000, 
         .disable_auto_redirect = false, 
         .max_redirection_count = 5,};
 
