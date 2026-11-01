@@ -22,50 +22,125 @@
 
 static const char *TAG = "DNS";
 
+static int dns_create_socket(void)
+{
+    int socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (socket_fd < 0) {
+        ESP_LOGE(TAG, "Could not create UDP socket");
+        return -1;
+    }
+    return socket_fd;
+}
 
-static int dns_forward(uint8_t *request, int request_length, uint8_t *response)
+static int dns_configure_server(struct sockaddr_in *server)
+{
+    memset(server, 0, sizeof(*server));
+
+    server->sin_family = AF_INET;
+    server->sin_port = htons(DNS_UPSTREAM_PORT);
+
+    if (inet_pton(AF_INET, DNS_UPSTREAM_PRIMARY,
+                  &server->sin_addr) != 1) {
+        ESP_LOGE(TAG, "Invalid upstream DNS server address");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int dns_set_timeout(int socket_fd)
+{
+    struct timeval timeout = {
+        .tv_sec = DNS_TIMEOUT_SECONDS,
+        .tv_usec = 0
+    };
+
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO,
+                   &timeout, sizeof(timeout)) < 0) {
+        ESP_LOGE(TAG, "Failed to configure socket timeout");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int dns_send_request(int socket_fd,
+                            struct sockaddr_in *server,
+                            uint8_t *request,
+                            int request_length)
+{
+    int sent = sendto(socket_fd,
+                      request,
+                      request_length,
+                      0,
+                      (struct sockaddr *)server,
+                      sizeof(*server));
+
+    if (sent != request_length) {
+        ESP_LOGE(TAG, "Failed to send DNS request");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int dns_receive_response(int socket_fd, uint8_t *response)
+{
+    int response_length = recv(socket_fd,
+                               response,
+                               DNS_BUFFER_SIZE,
+                               0);
+
+    if (response_length < 0) {
+        ESP_LOGE(TAG, "Failed to receive DNS response");
+        return -1;
+    }
+
+    return response_length;
+}
+
+static void dns_cleanup(int socket_fd)
+{
+    if (socket_fd >= 0) {
+        close(socket_fd);
+    }
+}
+
+static int dns_forward(uint8_t *request,
+                       int request_length,
+                       uint8_t *response)
 {
     int socket_fd;
-
-    socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-    if (socket_fd < 0)
-        return -1;
-
+    int response_length = -1;
 
     struct sockaddr_in server;
 
-    memset( &server, 0, sizeof(server));
+    socket_fd = dns_create_socket();
 
-    server.sin_family = AF_INET;
-    server.sin_port = htons(DNS_UPSTREAM_PORT);
-
-    if (inet_pton(AF_INET, DNS_UPSTREAM_PRIMARY, &server.sin_addr) != 1){
-        close(socket_fd);
+    if (socket_fd < 0) {
+        ESP_LOGE(TAG, "Failed to create DNS socket");
         return -1;
     }
 
-    int sent = sendto( socket_fd, request, request_length, 0, (struct sockaddr *)&server, sizeof(server));
-
-    if (sent < 0){
-    close(socket_fd);
-    return -1;
+    if (dns_configure_server(&server) < 0) {
+        dns_cleanup(socket_fd);
+        return -1;
     }
 
-    struct timeval timeout;
+    if (dns_set_timeout(socket_fd) < 0) {
+        dns_cleanup(socket_fd);
+        return -1;
+    }
 
-    timeout.tv_sec = DNS_TIMEOUT_SECONDS;
-    timeout.tv_usec = 0;
+    if (dns_send_request(socket_fd, &server,
+                         request, request_length) < 0) {
+        dns_cleanup(socket_fd);
+        return -1;
+    }
 
+    response_length = dns_receive_response(socket_fd, response);
 
-    setsockopt( socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-
-
-    int response_length;
-
-    response_length = recv( socket_fd, response, DNS_BUFFER_SIZE, 0);
-
-    close(socket_fd);
+    dns_cleanup(socket_fd);
 
     return response_length;
 }
